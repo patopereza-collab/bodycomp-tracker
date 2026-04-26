@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyComp Tracker — Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="greeting">Mi cuenta</div>
+      <div class="page-title">Perfil</div>
+    </div>
+    <a href="/historial.html" class="avatar" title="Ir al historial">🏃</a>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Profile form -->
+  <div class="form-card stagger" id="profile-form-card">
+    <div class="field-row">
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" class="field-input" placeholder="Tu nombre" required>
+    </div>
+
+    <div class="field-row-2">
+      <div class="field-row">
+        <label for="fecha-nacimiento">Fecha de nacimiento</label>
+        <input type="date" id="fecha-nacimiento" class="field-input" required>
+      </div>
+      <div class="field-row">
+        <label>Edad</label>
+        <div class="profile-field-computed" id="edad-display">— años</div>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <label for="sexo">Sexo biológico</label>
+      <select id="sexo" class="field-input" required>
+        <option value="">Seleccionar</option>
+        <option value="M">Masculino</option>
+        <option value="F">Femenino</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <label for="estatura">Estatura</label>
+      <div class="field-with-unit">
+        <input type="number" id="estatura" class="field-input" placeholder="175" min="100" max="250" required style="padding-right:36px">
+        <span class="field-unit">cm</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="btn-guardar" onclick="guardarPerfil()">Guardar perfil</button>
+  </div>
+
+  <!-- Change password -->
+  <div class="section-label mt-16">Seguridad</div>
+  <div class="form-card">
+    <div class="field-row">
+      <label for="nueva-pass">Nueva contraseña</label>
+      <input type="password" id="nueva-pass" class="field-input" placeholder="Mín. 6 caracteres" minlength="6">
+    </div>
+    <div class="field-row">
+      <label for="confirmar-pass">Confirmar contraseña</label>
+      <input type="password" id="confirmar-pass" class="field-input" placeholder="Repetir contraseña">
+    </div>
+    <div class="auth-error" id="pass-error"></div>
+    <button class="btn-secondary" id="btn-cambiar-pass" onclick="cambiarContrasena()">Cambiar contraseña</button>
+  </div>
+
+  <!-- Sign out -->
+  <div class="mt-8 mb-16">
+    <button class="btn-danger" onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+
+</div>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/perfil.js"></script>
+</body>
+</html>

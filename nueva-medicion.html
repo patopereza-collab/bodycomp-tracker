@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyComp Tracker — Nueva medición</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">Nueva medición</div>
+    <a href="/historial.html" class="avatar" title="Volver al historial" style="background:var(--cream2)">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text2)" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5"/><path d="M12 5l-7 7 7 7"/></svg>
+    </a>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Fecha destacada -->
+  <div class="date-block">
+    <div class="date-block-icon">
+      <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+    </div>
+    <div style="flex:1">
+      <div class="date-block-label">Fecha de la medición</div>
+      <input type="date" id="fecha-medicion" required>
+    </div>
+  </div>
+
+  <!-- Datos de la balanza -->
+  <div class="section-label">Datos de la balanza</div>
+  <div class="form-card">
+
+    <div class="field-row-2">
+      <div class="field-row">
+        <label for="peso">Peso</label>
+        <div class="field-with-unit">
+          <input type="number" id="peso" class="field-input" placeholder="82.5" step="0.1" min="20" max="300" style="padding-right:36px">
+          <span class="field-unit">kg</span>
+        </div>
+        <span class="field-error" id="err-peso"></span>
+      </div>
+      <div class="field-row">
+        <label for="imc">IMC</label>
+        <div class="field-with-unit">
+          <input type="number" id="imc" class="field-input" placeholder="27.0" step="0.1" min="10" max="70" style="padding-right:52px">
+          <span class="field-unit">kg/m²</span>
+        </div>
+        <span class="field-error" id="err-imc"></span>
+      </div>
+    </div>
+
+    <div class="field-row-2">
+      <div class="field-row">
+        <label for="grasa">% Grasa</label>
+        <div class="field-with-unit">
+          <input type="number" id="grasa" class="field-input" placeholder="22.0" step="0.1" min="1" max="70" style="padding-right:28px">
+          <span class="field-unit">%</span>
+        </div>
+        <span class="field-error" id="err-grasa"></span>
+      </div>
+      <div class="field-row">
+        <label for="musculo">% Músculo</label>
+        <div class="field-with-unit">
+          <input type="number" id="musculo" class="field-input" placeholder="38.0" step="0.1" min="1" max="80" style="padding-right:28px">
+          <span class="field-unit">%</span>
+        </div>
+        <span class="field-error" id="err-musculo"></span>
+      </div>
+    </div>
+
+    <div class="field-row-2">
+      <div class="field-row">
+        <label for="tmb">TMB</label>
+        <div class="field-with-unit">
+          <input type="number" id="tmb" class="field-input" placeholder="1850" min="500" max="5000" style="padding-right:42px">
+          <span class="field-unit">kcal</span>
+        </div>
+        <span class="field-error" id="err-tmb"></span>
+      </div>
+      <div class="field-row">
+        <label for="body-age">Body Age</label>
+        <div class="field-with-unit">
+          <input type="number" id="body-age" class="field-input" placeholder="38" min="10" max="100" style="padding-right:42px">
+          <span class="field-unit">años</span>
+        </div>
+        <span class="field-error" id="err-body-age"></span>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <label for="grasa-visceral">Grasa Visceral</label>
+      <div class="field-with-unit">
+        <input type="number" id="grasa-visceral" class="field-input" placeholder="8" min="1" max="20" style="padding-right:72px">
+        <span class="field-unit">nivel 1–20</span>
+      </div>
+      <span class="field-error" id="err-grasa-visceral"></span>
+    </div>
+
+  </div>
+
+  <!-- Notas -->
+  <div class="section-label">Notas (opcional)</div>
+  <div class="form-card">
+    <textarea id="notas" class="field-input" placeholder="Observaciones, contexto de la medición..."></textarea>
+  </div>
+
+  <!-- Guardar -->
+  <button class="btn-primary" id="btn-guardar" onclick="guardarMedicion()">
+    Guardar y generar PDF
+  </button>
+  <p style="text-align:center;font-size:11px;color:var(--text2);font-weight:600;margin-top:8px">
+    Se guardará en el historial y se generará el reporte PDF
+  </p>
+
+</div>
+
+<!-- PDF template (hidden) -->
+<div id="pdf-template" style="position:absolute;left:-9999px;top:0;width:794px"></div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a href="/historial.html" class="nav-item" title="Historial">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>Historial</span>
+  </a>
+  <a href="/nueva-medicion.html" class="nav-fab" title="Nueva medición">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </a>
+  <a href="/progreso.html" class="nav-item" title="Progreso">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Progreso</span>
+  </a>
+</nav>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/pdf-report.js"></script>
+<script src="js/nueva-medicion.js"></script>
+</body>
+</html>

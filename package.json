@@ -1,0 +1,19 @@
+{
+  "name": "bodycomp-tracker",
+  "version": "1.0.0",
+  "description": "Body composition tracking app – bioimpedance scale data",
+  "private": true,
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "playwright test",
+    "test:ui:headed": "playwright test --headed",
+    "test:all": "vitest run && playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "vitest": "^1.6.0"
+  }
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyComp Tracker — Progreso</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-title">Progreso</div>
+    <span class="pill" id="total-pill" style="background:var(--green-bg);color:var(--green);display:none"></span>
+  </div>
+
+  <!-- Period tabs -->
+  <div class="period-tabs">
+    <button class="period-tab" data-months="1" onclick="setPeriod(this)">1M</button>
+    <button class="period-tab active" data-months="3" onclick="setPeriod(this)">3M</button>
+    <button class="period-tab" data-months="6" onclick="setPeriod(this)">6M</button>
+    <button class="period-tab" data-months="12" onclick="setPeriod(this)">1A</button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row" id="stats-row" style="display:none">
+    <div class="stat-card">
+      <div class="stat-label">Peso inicial</div>
+      <div class="stat-val text-orange" id="stat-inicial">—</div>
+      <div class="stat-sub">kg</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Peso actual</div>
+      <div class="stat-val text-green" id="stat-actual">—</div>
+      <div class="stat-sub">kg</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Mediciones</div>
+      <div class="stat-val" id="stat-count">—</div>
+      <div class="stat-sub">registros</div>
+    </div>
+  </div>
+
+  <!-- Chart: Peso -->
+  <div class="chart-card" id="card-peso" style="display:none">
+    <div class="chart-header">
+      <div class="chart-title">Peso</div>
+      <div style="text-align:right">
+        <span class="chart-current text-orange" id="cur-peso">—</span>
+        <span class="chart-delta-badge" id="badge-peso"></span>
+      </div>
+    </div>
+    <canvas id="chart-peso" height="80"></canvas>
+  </div>
+
+  <!-- Chart: % Grasa -->
+  <div class="chart-card" id="card-grasa" style="display:none">
+    <div class="chart-header">
+      <div class="chart-title">% Grasa Corporal</div>
+      <div style="text-align:right">
+        <span class="chart-current text-red" id="cur-grasa">—</span>
+        <span class="chart-delta-badge" id="badge-grasa"></span>
+      </div>
+    </div>
+    <canvas id="chart-grasa" height="80"></canvas>
+  </div>
+
+  <!-- Chart: % Músculo -->
+  <div class="chart-card" id="card-musculo" style="display:none">
+    <div class="chart-header">
+      <div class="chart-title">% Músculo</div>
+      <div style="text-align:right">
+        <span class="chart-current text-green" id="cur-musculo">—</span>
+        <span class="chart-delta-badge" id="badge-musculo"></span>
+      </div>
+    </div>
+    <canvas id="chart-musculo" height="80"></canvas>
+  </div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="empty-state" style="display:none">
+    <div class="empty-state-icon">📈</div>
+    <h3>Sin datos en este período</h3>
+    <p>No hay mediciones en el período seleccionado. Probá con un rango mayor.</p>
+  </div>
+
+  <div id="loading" style="text-align:center;padding:48px 0;color:var(--text2);font-weight:700">Cargando...</div>
+
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a href="/historial.html" class="nav-item" title="Historial">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>Historial</span>
+  </a>
+  <a href="/nueva-medicion.html" class="nav-fab" title="Nueva medición">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </a>
+  <a href="/progreso.html" class="nav-item active" title="Progreso">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Progreso</span>
+  </a>
+</nav>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/progreso.js"></script>
+</body>
+</html>

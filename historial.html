@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyComp Tracker — Historial</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <div class="greeting" id="greeting">Hola</div>
+      <div class="page-title">Tu historial</div>
+    </div>
+    <a href="/perfil.html" class="avatar" title="Perfil">🏃</a>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Summary strip -->
+  <div class="summary-strip stagger" id="summary-strip" style="display:none">
+    <div class="summary-main">
+      <span class="summary-label">Última medición</span>
+      <span class="summary-val" id="summary-peso">—</span>
+      <span class="summary-sub" id="summary-fecha">—</span>
+    </div>
+    <div class="summary-delta" id="summary-delta" style="display:none">
+      <span class="d-val" id="delta-val">—</span>
+      <span class="d-label">vs anterior</span>
+    </div>
+  </div>
+
+  <!-- Measurement list -->
+  <div class="section-label" id="list-label" style="display:none">Mediciones recientes</div>
+  <div id="mediciones-list" class="stagger"></div>
+
+  <!-- Empty state -->
+  <div class="empty-state" id="empty-state" style="display:none">
+    <div class="empty-state-icon">📊</div>
+    <h3>Sin mediciones aún</h3>
+    <p>Registrá tu primera medición para empezar a ver tu progreso.</p>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading" style="text-align:center;padding:48px 0;color:var(--text2);font-weight:700">Cargando...</div>
+
+</div>
+
+<!-- PDF template (hidden) -->
+<div id="pdf-template" style="position:absolute;left:-9999px;top:0;width:794px"></div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <a href="/historial.html" class="nav-item active" title="Historial">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <span>Historial</span>
+  </a>
+  <a href="/nueva-medicion.html" class="nav-fab" title="Nueva medición">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </a>
+  <a href="/progreso.html" class="nav-item" title="Progreso">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span>Progreso</span>
+  </a>
+</nav>
+
+<script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/pdf-report.js"></script>
+<script src="js/historial.js"></script>
+</body>
+</html>

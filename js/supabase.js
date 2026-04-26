@@ -1,6 +1,6 @@
 // Supabase client — replace placeholders with your project credentials
-const SUPABASE_URL = 'REEMPLAZAR_CON_TU_URL';
-const SUPABASE_KEY = 'REEMPLAZAR_CON_TU_ANON_KEY';
+const SUPABASE_URL = 'https://fcvwnussrbdydxxbydth.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ';
 
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);

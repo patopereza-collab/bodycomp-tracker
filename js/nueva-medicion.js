@@ -1,5 +1,6 @@
-let currentUser   = null;
+let currentUser    = null;
 let currentProfile = null;
+let editId         = null;
 
 (async () => {
   const session = await getSession();
@@ -7,9 +8,35 @@ let currentProfile = null;
   const { data } = await getProfile(currentUser.id);
   currentProfile = data;
 
-  // Default date = today
-  document.getElementById('fecha-medicion').value = utils.hoy();
+  editId = new URLSearchParams(window.location.search).get('edit');
+
+  if (editId) {
+    document.querySelector('.page-title').textContent = 'Editar medición';
+    document.getElementById('btn-guardar').textContent = 'Guardar cambios';
+    document.querySelector('p[style*="Se guardará"]').textContent =
+      'Se actualizará la medición y su reporte PDF.';
+    await precargarMedicion(editId);
+  } else {
+    document.getElementById('fecha-medicion').value = utils.hoy();
+  }
 })();
+
+async function precargarMedicion(id) {
+  const { data: m, error } = await getMeasurementById(id);
+  if (error || !m) {
+    showToast('Error al cargar la medición.', 'error');
+    return;
+  }
+  document.getElementById('fecha-medicion').value = m.fecha_medicion;
+  document.getElementById('peso').value            = m.peso_kg;
+  document.getElementById('imc').value             = m.imc;
+  document.getElementById('grasa').value           = m.grasa_pct;
+  document.getElementById('musculo').value         = m.musculo_pct;
+  document.getElementById('tmb').value             = m.tmb_kcal;
+  document.getElementById('body-age').value        = m.body_age;
+  document.getElementById('grasa-visceral').value  = m.grasa_visceral;
+  document.getElementById('notas').value           = m.notas || '';
+}
 
 // ── Validation ─────────────────────────────────────────────────
 
@@ -62,8 +89,7 @@ async function guardarMedicion() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>Guardando...';
 
-  const medicion = {
-    user_id:        currentUser.id,
+  const payload = {
     fecha_medicion: document.getElementById('fecha-medicion').value,
     peso_kg:        parseFloat(document.getElementById('peso').value),
     imc:            parseFloat(document.getElementById('imc').value),
@@ -75,29 +101,44 @@ async function guardarMedicion() {
     notas:          document.getElementById('notas').value.trim() || null
   };
 
-  const { data, error } = await insertMeasurement(medicion);
-  if (error) {
-    btn.disabled = false;
-    btn.textContent = 'Guardar y generar PDF';
-    showToast('Error al guardar: ' + error.message, 'error');
-    return;
+  let savedId;
+
+  if (editId) {
+    const { data, error } = await updateMeasurement(editId, payload);
+    if (error) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar cambios';
+      showToast('Error al guardar: ' + error.message, 'error');
+      return;
+    }
+    savedId = editId;
+    // Delete old PDF so it gets regenerated
+    await deletePdf(currentUser.id, savedId);
+    await updateMeasurementPdfUrl(savedId, null);
+  } else {
+    const { data, error } = await insertMeasurement({ user_id: currentUser.id, ...payload });
+    if (error) {
+      btn.disabled = false;
+      btn.textContent = 'Guardar y generar PDF';
+      showToast('Error al guardar: ' + error.message, 'error');
+      return;
+    }
+    savedId = data.id;
   }
 
-  // Generate PDF
+  // Generate and upload PDF
   btn.innerHTML = '<span class="spinner"></span>Generando PDF...';
   try {
-    // Fetch last 6 measurements for the history trend chart in PDF
     const { data: historial } = await getMeasurements(currentUser.id, { limit: 6, order: 'asc' });
-    const pdfBlob = await generarPDFBlob(data, currentProfile, historial || []);
+    const { data: medicionFull } = await getMeasurementById(savedId);
+    const pdfBlob = await generarPDFBlob(medicionFull, currentProfile, historial || []);
 
-    // Upload to Storage
-    const { url, error: uploadErr } = await uploadPdf(currentUser.id, data.id, pdfBlob);
+    const { url, error: uploadErr } = await uploadPdf(currentUser.id, savedId, pdfBlob);
     if (!uploadErr && url) {
-      await updateMeasurementPdfUrl(data.id, url);
-      // Trigger browser download
+      await updateMeasurementPdfUrl(savedId, url);
       const a = document.createElement('a');
       a.href = URL.createObjectURL(pdfBlob);
-      a.download = `biocomp-${data.fecha_medicion}.pdf`;
+      a.download = `biocomp-${medicionFull.fecha_medicion}.pdf`;
       a.click();
     }
   } catch (pdfErr) {

@@ -76,7 +76,41 @@ async function updateMeasurementPdfUrl(id, pdfUrl) {
   return { error };
 }
 
+async function getMeasurementById(id) {
+  const { data, error } = await sb
+    .from('measurements')
+    .select('*')
+    .eq('id', id)
+    .single();
+  return { data, error };
+}
+
+async function updateMeasurement(id, updates) {
+  const { data, error } = await sb
+    .from('measurements')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  return { data, error };
+}
+
+async function deleteMeasurement(id) {
+  const { error } = await sb
+    .from('measurements')
+    .delete()
+    .eq('id', id);
+  return { error };
+}
+
 // ── Storage helpers ────────────────────────────────────────────
+
+async function deletePdf(userId, measurementId) {
+  const { error } = await sb.storage
+    .from('pdf-reports')
+    .remove([`${userId}/${measurementId}.pdf`]);
+  return { error };
+}
 
 async function uploadPdf(userId, measurementId, pdfBlob) {
   const path = `${userId}/${measurementId}.pdf`;

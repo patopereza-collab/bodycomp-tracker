@@ -132,9 +132,10 @@ test.describe('Nueva medición page', () => {
 
   test('redirects to index.html when no session', async ({ page }) => {
     await page.goto('/nueva-medicion.html');
-    await page.waitForURL('**/index.html', { timeout: 10000 }).catch(() => {});
+    // serve redirects /index.html → / so accept both root and index.html URLs
+    await page.waitForURL(url => url.includes('index') || url.endsWith('/'), { timeout: 10000 }).catch(() => {});
     const url = page.url();
-    expect(url.includes('nueva-medicion') || url.includes('index')).toBe(true);
+    expect(url.includes('nueva-medicion') || url.includes('index') || url.endsWith('/')).toBe(true);
   });
 });
 

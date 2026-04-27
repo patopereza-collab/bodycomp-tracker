@@ -10,7 +10,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body class="has-nav">
 
 <div class="page">
 
@@ -58,13 +58,25 @@
 <!-- PDF template (hidden) -->
 <div id="pdf-template" style="position:absolute;left:-9999px;top:0;width:794px"></div>
 
+<!-- Delete confirmation modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal-card">
+    <div class="modal-title">¿Eliminar medición?</div>
+    <p class="modal-body">Esta acción no se puede deshacer. Se eliminará la medición y su PDF del historial.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-danger" id="btn-confirmar-delete" onclick="ejecutarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bottom Nav -->
 <nav class="bottom-nav">
   <a href="/historial.html" class="nav-item active" title="Historial">
     <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
     <span>Historial</span>
   </a>
-  <a href="/nueva-medicion.html" class="nav-fab" title="Nueva medición">
+  <a href="/nueva-medicion.html" class="nav-fab" data-label="Nueva medición" title="Nueva medición">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </a>
   <a href="/progreso.html" class="nav-item" title="Progreso">

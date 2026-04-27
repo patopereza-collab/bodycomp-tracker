@@ -231,6 +231,52 @@ a { color: inherit; text-decoration: none; }
 .delta-bad  { color: var(--red); }
 .delta-neu  { color: var(--text2); }
 
+/* ── Card Actions (edit / delete / pdf) ─────────────────────── */
+.card-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ── Edit Button ─────────────────────────────────────────────── */
+.edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--blue-bg);
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.edit-btn:hover { background: #cfe0f2; }
+
+/* ── Delete Button ───────────────────────────────────────────── */
+.delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--red-bg);
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--red);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.delete-btn:hover { background: #f5c5c5; }
+
 /* ── PDF Button ──────────────────────────────────────────────── */
 .pdf-btn {
   display: flex;
@@ -255,6 +301,68 @@ a { color: inherit; text-decoration: none; }
   stroke: currentColor;
   fill: none;
   flex-shrink: 0;
+}
+
+/* ── Modal ───────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 28px 24px 20px;
+  width: 100%;
+  max-width: 340px;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(16px);
+  transition: transform 0.2s;
+}
+
+.modal-overlay.active .modal-card {
+  transform: translateY(0);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.modal-body {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.modal-actions .btn-secondary,
+.modal-actions .btn-danger {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
 }
 
 /* ── Form ────────────────────────────────────────────────────── */
@@ -729,6 +837,95 @@ textarea.field-input {
 @media (min-width: 1024px) {
   body { padding-top: 48px; }
   .page { margin-bottom: 48px; }
+}
+
+/* ── Desktop Sidebar (≥900px, body.has-nav) ──────────────────── */
+@media (min-width: 900px) {
+  body.has-nav {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 0;
+    min-height: 100vh;
+    background: var(--cream2);
+  }
+
+  body.has-nav .bottom-nav {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 220px;
+    height: 100vh;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    padding: 32px 12px 24px;
+    gap: 4px;
+    max-width: none;
+    transform: none;
+    background: var(--white);
+    box-shadow: 2px 0 16px rgba(0,0,0,0.06);
+    z-index: 100;
+  }
+
+  body.has-nav .nav-item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  body.has-nav .nav-item span {
+    font-size: 14px;
+    display: block;
+  }
+
+  body.has-nav .nav-fab {
+    order: -1;
+    width: 100%;
+    height: 52px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    margin-top: 0;
+    flex-shrink: 0;
+    gap: 10px;
+  }
+
+  body.has-nav .nav-fab::after {
+    content: attr(data-label);
+    color: white;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+  }
+
+  body.has-nav .nav-fab svg {
+    flex-shrink: 0;
+  }
+
+  body.has-nav .page {
+    margin-left: 220px;
+    width: calc(100% - 220px);
+    max-width: 820px;
+    border-radius: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    min-height: 100vh;
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-bottom: 48px;
+    background: var(--cream);
+  }
+
+  body.has-nav .toast {
+    left: calc(220px + (100% - 220px) / 2);
+  }
 }
 
 /* Reduced motion */

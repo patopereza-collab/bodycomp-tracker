@@ -1,0 +1,25 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 8 * * 1,4' # Lunes y jueves 08:00 UTC — evita la pausa por inactividad (7 días)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: https://fcvwnussrbdydxxbydth.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase respondió con status $status"
+          if [ "$status" -ge 400 ]; then
+            echo "::error::Ping a Supabase falló con status $status"
+            exit 1
+          fi

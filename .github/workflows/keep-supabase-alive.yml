@@ -1,25 +1,39 @@
 name: Keep Supabase Alive
 
+# Un GET de lectura no siempre cuenta como "actividad" para el free tier de
+# Supabase (el proyecto se pausó pese a pings 200 OK). Por eso este workflow
+# hace un WRITE real a la base vía la función RPC keepalive(), a diario.
+
 on:
   schedule:
-    - cron: '0 8 * * 1,4' # Lunes y jueves 08:00 UTC — evita la pausa por inactividad (7 días)
+    - cron: '0 8 * * *' # todos los días 08:00 UTC
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase REST API
+      - name: Write keepalive via RPC
         env:
           SUPABASE_URL: https://fcvwnussrbdydxxbydth.supabase.co
           SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ
         run: |
-          status=$(curl -s -o /dev/null -w "%{http_code}" \
-            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+          set +e
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            "$SUPABASE_URL/rest/v1/rpc/keepalive" \
             -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "Supabase respondió con status $status"
-          if [ "$status" -ge 400 ]; then
-            echo "::error::Ping a Supabase falló con status $status"
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          curl_exit=$?
+          status=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          if [ "$curl_exit" -ne 0 ]; then
+            echo "::error::curl falló con exit code $curl_exit (¿proyecto pausado / DNS caído?)"
+            exit 1
+          fi
+          echo "Supabase respondió con status $status — last_ping: $body"
+          if [ "$status" -ge 400 ] || [ "$status" -lt 200 ]; then
+            echo "::error::Keepalive falló con status $status: $body"
             exit 1
           fi

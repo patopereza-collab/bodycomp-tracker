@@ -106,3 +106,52 @@ bodycomp-tracker/
 │   └── ui.spec.js          # E2E tests (Playwright)
 └── netlify.toml
 ```
+
+---
+
+## Si el login deja de funcionar
+
+Casi siempre es lo mismo: **el proyecto de Supabase se pausó** por el free tier
+(se pausa por inactividad) y el dominio `*.supabase.co` deja de resolver, así que
+la app no puede autenticar.
+
+**Cómo verificarlo:**
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  https://fcvwnussrbdydxxbydth.supabase.co/auth/v1/health \
+  -H "apikey: <SUPABASE_ANON_KEY>"
+```
+
+- `200` → Supabase está vivo, el problema es otro.
+- error de DNS / `521` → proyecto pausado.
+
+**Cómo reactivarlo:**
+
+1. Dashboard de Supabase → proyecto `bodycomp-tracker` → **Restore project**, o
+2. Ejecutar el workflow *Keep Supabase Alive* a mano (`gh workflow run keep-supabase-alive.yml`),
+   que detecta la pausa y lo restaura solo.
+
+Tarda 2–4 minutos en volver: primero DNS, después Auth, después PostgREST. Mientras
+PostgREST termina de levantar, las llamadas RPC pueden devolver `PGRST202` — es el
+caché de esquema que todavía no cargó, no un problema del schema.
+
+### Auto-recuperación (secret opcional)
+
+El workflow `.github/workflows/keep-supabase-alive.yml` corre a diario, escribe en
+la base vía `rpc/keepalive` y, **si detecta que el proyecto está caído, lo des-pausa
+solo** usando la Management API.
+
+Para que ese paso funcione hay que cargar un secret en el repo:
+
+1. Crear un Personal Access Token en https://supabase.com/dashboard/account/tokens
+2. Repo → Settings → Secrets and variables → Actions → **New repository secret**
+   - Nombre: `SUPABASE_ACCESS_TOKEN`
+   - Valor: el token
+
+Sin ese secret el workflow igual corre, pero solo falla con un mensaje de error en
+vez de arreglar la pausa.
+
+> Ojo: el ping diario **no garantiza** que Supabase no lo pause. Entre 2026-08-03 y
+> 2026-09-10 el keepalive escribió todos los días con `200` y el proyecto se pausó
+> igual el 2026-09-11. Por eso importa el paso de auto-restore.

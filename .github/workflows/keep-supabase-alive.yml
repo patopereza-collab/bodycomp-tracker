@@ -1,25 +1,38 @@
 name: Keep Supabase Alive
 
-# Un GET de lectura no siempre cuenta como "actividad" para el free tier de
-# Supabase (el proyecto se pausó pese a pings 200 OK). Por eso este workflow
-# hace un WRITE real a la base vía la función RPC keepalive(), a diario.
+# El free tier de Supabase pausa el proyecto por inactividad, y los pings del
+# anon key NO siempre bastan para evitarlo: entre 2026-08-03 y 2026-09-10 este
+# workflow escribió a diario con status 200 y el proyecto se pausó igual el
+# 2026-09-11, dejando el login caído (DNS sin resolver, curl exit 6).
+#
+# Por eso ahora el workflow hace dos cosas:
+#   1. Ping de escritura vía RPC keepalive()  → intento de mantenerlo activo.
+#   2. Si el ping falla, des-pausa el proyecto vía Management API → auto-recuperación.
+#
+# El paso 2 necesita el secret SUPABASE_ACCESS_TOKEN (Personal Access Token de
+# https://supabase.com/dashboard/account/tokens). Sin ese secret el workflow
+# sigue funcionando, pero solo avisa del fallo en vez de arreglarlo.
 
 on:
   schedule:
     - cron: '0 8 * * *' # todos los días 08:00 UTC
   workflow_dispatch:
 
+env:
+  SUPABASE_URL: https://fcvwnussrbdydxxbydth.supabase.co
+  PROJECT_REF: fcvwnussrbdydxxbydth
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
       - name: Write keepalive via RPC
+        id: ping
         env:
-          SUPABASE_URL: https://fcvwnussrbdydxxbydth.supabase.co
-          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ' }}
         run: |
           set +e
-          response=$(curl -s -w "\n%{http_code}" -X POST \
+          response=$(curl -s --max-time 30 -w "\n%{http_code}" -X POST \
             "$SUPABASE_URL/rest/v1/rpc/keepalive" \
             -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
@@ -28,12 +41,58 @@ jobs:
           curl_exit=$?
           status=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
+
           if [ "$curl_exit" -ne 0 ]; then
-            echo "::error::curl falló con exit code $curl_exit (¿proyecto pausado / DNS caído?)"
-            exit 1
+            echo "::warning::curl falló con exit code $curl_exit (proyecto pausado o DNS caído)"
+            echo "alive=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
           echo "Supabase respondió con status $status — last_ping: $body"
           if [ "$status" -ge 400 ] || [ "$status" -lt 200 ]; then
-            echo "::error::Keepalive falló con status $status: $body"
+            echo "::warning::Keepalive devolvió status $status: $body"
+            echo "alive=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "alive=true" >> "$GITHUB_OUTPUT"
+
+      - name: Restore project if paused
+        if: steps.ping.outputs.alive == 'false'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::El proyecto parece pausado y no hay secret SUPABASE_ACCESS_TOKEN para reactivarlo."
+            echo "Creá un Personal Access Token en https://supabase.com/dashboard/account/tokens"
+            echo "y guardalo como secret SUPABASE_ACCESS_TOKEN en el repo."
             exit 1
           fi
+          echo "Proyecto caído — pidiendo restore vía Management API..."
+          code=$(curl -s -o /tmp/restore.json -w "%{http_code}" -X POST \
+            "https://api.supabase.com/v1/projects/$PROJECT_REF/restore" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "restore → HTTP $code: $(cat /tmp/restore.json)"
+          if [ "$code" -ge 400 ]; then
+            echo "::error::No se pudo restaurar el proyecto (HTTP $code)"
+            exit 1
+          fi
+
+      - name: Wait for project to come back up
+        if: steps.ping.outputs.alive == 'false'
+        env:
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjdndudXNzcmJkeWR4eGJ5ZHRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxNTI2MDUsImV4cCI6MjA5MjcyODYwNX0.3709eZcYol43OCZuD1hb7jgTPbyhaIvRsTd16wHNMQQ' }}
+        run: |
+          # El restore tarda ~2-4 min: primero vuelve DNS, después auth, después PostgREST.
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null --max-time 10 -w "%{http_code}" \
+              "$SUPABASE_URL/auth/v1/health" -H "apikey: $SUPABASE_ANON_KEY" || echo 000)
+            echo "intento $i — /auth/v1/health → $code"
+            if [ "$code" = "200" ]; then
+              echo "✅ Proyecto reactivado: el login vuelve a funcionar."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::El proyecto no volvió a estar disponible tras 10 minutos."
+          exit 1

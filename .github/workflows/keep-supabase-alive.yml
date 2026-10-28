@@ -64,7 +64,7 @@ jobs:
           for q in \
             "profiles?select=*" \
             "measurements?select=*&order=fecha_medicion.desc&limit=100" \
-            "measurements?select=peso,grasa_pct&limit=300" ; do
+            "measurements?select=peso_kg,grasa_pct,musculo_pct&limit=300" ; do
             code=$(curl -s -o /dev/null --max-time 25 -w "%{http_code}" \
               "$SUPABASE_URL/rest/v1/$q" \
               -H "apikey: $SUPABASE_ANON_KEY" \
